@@ -1,29 +1,37 @@
 use anyhow::Result;
-use macroquad::prelude::*;
+use bevy::prelude::*;
+use bevy_svg::prelude::*;
 
-fn window_conf() -> Conf {
-    Conf {
-        window_title: "Chess".to_owned(),
-        sample_count: 8,
-        ..Default::default()
-    }
+fn main() -> Result<()> {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(bevy_svg::prelude::SvgPlugin)
+        .insert_resource(ClearColor(Color::hex(
+            shake_chess::render::BACKGROUND_COLOR,
+        )?))
+        .insert_resource(shake_chess::render::DrawInfo::default())
+        .insert_resource(shake_chess::game::Board::default())
+        .add_systems(PreStartup, shake_chess::render::update_draw_info)
+        .add_systems(
+            Startup,
+            (
+                setup,
+                shake_chess::render::draw_chessboard,
+                shake_chess::game::setup_game,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                shake_chess::render::update_draw_info,
+                shake_chess::render::draw_pieces,
+            ),
+        )
+        .run();
+
+    Ok(())
 }
 
-#[macroquad::main(window_conf)]
-async fn main() -> Result<()> {
-    let board = chess::Board::default();
-    let textures = shake_chess::load_textures().await?;
-
-    loop {
-        // PRE UPDATE PHASE
-        let draw_info = shake_chess::board::calculate_draw_info();
-        shake_chess::board::draw_board(&draw_info);
-        shake_chess::board::draw_pieces(board, &draw_info, &textures);
-
-        // UPDATE PHASE
-
-        // POST UPDATE PHASE
-
-        next_frame().await;
-    }
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
 }
