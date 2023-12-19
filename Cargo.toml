@@ -1,0 +1,13 @@
+[package]
+name = "shake_chess"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+chess = "3.2.0"
+futures = "0.3.29"
+macroquad = "0.4.4"
+resvg = "0.37.0"
