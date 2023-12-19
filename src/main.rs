@@ -11,12 +11,12 @@ fn main() -> Result<()> {
         )?))
         .insert_resource(shake_chess::render::DrawInfo::default())
         .insert_resource(shake_chess::game::Board::default())
+        .add_event::<shake_chess::game::MoveEvent>()
         .add_systems(PreStartup, shake_chess::render::update_draw_info)
         .add_systems(
             Startup,
             (
                 setup,
-                shake_chess::render::draw_chessboard,
                 shake_chess::game::setup_game,
             ),
         )
@@ -24,6 +24,7 @@ fn main() -> Result<()> {
             Update,
             (
                 shake_chess::render::update_draw_info,
+                shake_chess::render::draw_chessboard,
                 shake_chess::render::draw_pieces,
             ),
         )
@@ -32,6 +33,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut move_ev: EventWriter<shake_chess::game::MoveEvent>) {
     commands.spawn(Camera2dBundle::default());
+    move_ev.send(shake_chess::game::MoveEvent(None));
 }
