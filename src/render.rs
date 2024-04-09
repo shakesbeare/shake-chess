@@ -11,9 +11,6 @@ const LIGHT_SQUARE_COLOR: &str = "#F0D9B5"; // stolen from lichess
 const DARK_SQUARE_COLOR: &str = "#B58863"; // ... again
 pub const BACKGROUND_COLOR: &str = "#313338"; // stolen from discord
 
-#[derive(Component)]
-pub struct Square;
-
 #[allow(dead_code)]
 #[derive(Resource, Default, Debug)]
 pub struct DrawInfo {
@@ -37,22 +34,14 @@ pub fn update_draw_info(
     let width = window.width();
     let height = window.height();
 
-    let (square_size, y_start, x_start) = {
+    let square_size = {
         let board_horizontal_space = height * VERT_BOARD_PERCENT;
         let board_allowed_space = width * HORI_BOARD_PERCENT;
 
         if board_horizontal_space > board_allowed_space {
-            (
-                board_allowed_space / BOARD_LENGTH as f32,
-                height * (1. - VERT_BOARD_PERCENT) / 2.,
-                (width - (board_allowed_space)) / 2.,
-            )
+            board_allowed_space / BOARD_LENGTH as f32
         } else {
-            (
-                (height * VERT_BOARD_PERCENT) / BOARD_LENGTH as f32,
-                height * (1. - VERT_BOARD_PERCENT) / 2.,
-                (width - (height * VERT_BOARD_PERCENT)) / 2.,
-            )
+            (height * VERT_BOARD_PERCENT) / BOARD_LENGTH as f32
         }
     };
 
@@ -61,59 +50,65 @@ pub fn update_draw_info(
 
 pub fn draw_chessboard(
     draw_info: Res<DrawInfo>,
-    entities: Query<Entity, With<Square>>,
+    entities: Query<Entity, With<crate::Square>>,
     mut commands: Commands,
     mut window_ev: EventReader<WindowResized>,
 ) {
     if window_ev.is_empty() {
         return;
     }
-
     for _ in window_ev.read() {}
+    info!("Redrawing board...");
 
     for entity in entities.iter() {
         commands.entity(entity).despawn();
     }
 
     let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
-    commands.spawn((SpriteBundle {
-        sprite: Sprite {
-            color: Color::hex(LIGHT_SQUARE_COLOR).unwrap(),
-            custom_size: Some(Vec2::new(
-                draw_info.square_size * BOARD_LENGTH as f32,
-                draw_info.square_size * BOARD_LENGTH as f32,
-            )),
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::hex(LIGHT_SQUARE_COLOR).unwrap(),
+                custom_size: Some(Vec2::new(
+                    draw_info.square_size * BOARD_LENGTH as f32,
+                    draw_info.square_size * BOARD_LENGTH as f32,
+                )),
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..default()
         },
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
-        ..default()
-    }, Square));
+        crate::Square,
+    ));
 
     for i in 0..BOARD_LENGTH {
         for j in 0..BOARD_LENGTH {
             if (i + j) % 2 == 0 {
                 continue;
             }
-            commands.spawn((SpriteBundle {
-                sprite: Sprite {
-                    color: Color::hex(DARK_SQUARE_COLOR).unwrap(),
-                    custom_size: Some(Vec2::new(
-                        draw_info.square_size,
-                        draw_info.square_size,
+            commands.spawn((
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::hex(DARK_SQUARE_COLOR).unwrap(),
+                        custom_size: Some(Vec2::new(
+                            draw_info.square_size,
+                            draw_info.square_size,
+                        )),
+                        ..default()
+                    },
+                    transform: Transform::from_translation(Vec3::new(
+                        offset
+                            + (i as f32) * draw_info.square_size
+                            + (draw_info.square_size / 2.),
+                        offset
+                            + (j as f32) * draw_info.square_size
+                            + (draw_info.square_size / 2.),
+                        1.0,
                     )),
                     ..default()
                 },
-                transform: Transform::from_translation(Vec3::new(
-                    offset
-                        + (i as f32) * draw_info.square_size
-                        + (draw_info.square_size / 2.),
-                    offset
-                        + (j as f32) * draw_info.square_size
-                        + (draw_info.square_size / 2.),
-                    1.0,
-                )),
-                ..default()
-            }, Square));
+                crate::Square,
+            ));
         }
     }
 }
@@ -122,7 +117,7 @@ pub fn draw_pieces(
     mut commands: Commands,
     board: Res<crate::game::Board>,
     draw_info: Res<DrawInfo>,
-    entities: Query<Entity, With<crate::game::Piece>>,
+    entities: Query<Entity, With<crate::Piece>>,
     asset_server: Res<AssetServer>,
     mut move_ev: EventReader<crate::game::MoveEvent>,
     mut window_ev: EventReader<WindowResized>,
@@ -137,7 +132,7 @@ pub fn draw_pieces(
     for _ in window_ev.read() {}
     info!("Redrawing pieces...");
 
-    // Currently, every piece is despawned and recreated when a move occurs
+    // Every piece is despawned and recreated when a move occurs
     // This is because we have to synchronize the sprites with the `chess` representation
     //     of the pieces.
 
@@ -167,20 +162,27 @@ pub fn draw_pieces(
             (chess::Piece::King, chess::Color::Black) => "black_king.svg",
         };
         let svg = asset_server.load(filename);
-        commands.spawn((Svg2dBundle {
-            svg,
-            origin: Origin::Center,
-            transform: Transform::from_translation(Vec3::new(
-                offset + file * draw_info.square_size + (draw_info.square_size / 2.),
-                offset + rank * draw_info.square_size + (draw_info.square_size / 2.),
-                2.0,
-            ))
-            .with_scale(Vec3::new(
-                draw_info.square_size / SPRITE_SIZE,
-                draw_info.square_size / SPRITE_SIZE,
-                1.0,
-            )),
-            ..default()
-        }, crate::game::Piece));
+        commands.spawn((
+            Svg2dBundle {
+                svg,
+                origin: Origin::Center,
+                transform: Transform::from_translation(Vec3::new(
+                    offset
+                        + file * draw_info.square_size
+                        + (draw_info.square_size / 2.),
+                    offset
+                        + rank * draw_info.square_size
+                        + (draw_info.square_size / 2.),
+                    2.0,
+                ))
+                .with_scale(Vec3::new(
+                    draw_info.square_size / SPRITE_SIZE,
+                    draw_info.square_size / SPRITE_SIZE,
+                    1.0,
+                )),
+                ..default()
+            },
+            crate::Piece,
+        ));
     }
 }

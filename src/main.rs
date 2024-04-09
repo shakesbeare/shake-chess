@@ -1,6 +1,5 @@
 use anyhow::Result;
 use bevy::prelude::*;
-use bevy_svg::prelude::*;
 
 fn main() -> Result<()> {
     App::new()

@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct Piece;
-
 #[derive(Resource, Default)]
 pub struct Board(pub chess::Board);
 
