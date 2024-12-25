@@ -1,6 +1,8 @@
 use bevy::prelude::*;
-use bevy::window::WindowResized;
+use bevy::window::{PrimaryWindow, WindowResized};
+use bevy::winit::cursor::CursorIcon;
 use bevy_svg::prelude::*;
+use chess::{BitBoard, File, Rank, Square};
 
 const SPRITE_SIZE: f32 = 45.;
 const BOARD_LENGTH: i32 = 8;
@@ -120,6 +122,7 @@ pub fn draw_pieces(
     // Every piece is despawned and recreated when a move occurs
     // This is because we have to synchronize the sprites with the `chess` representation
     //     of the pieces.
+    // It's way easier this way
 
     for entity in entities.iter() {
         commands.entity(entity).despawn_recursive();
@@ -162,5 +165,52 @@ pub fn draw_pieces(
             )),
             crate::Piece,
         ));
+    }
+}
+
+pub fn mouse_hover(
+    mut cursor: Query<&mut CursorIcon>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    window: Query<&Window, With<PrimaryWindow>>,
+    draw_info: Res<DrawInfo>,
+    board: Res<crate::game::Board>,
+) {
+    let window = window.single();
+    let (camera, camera_transform) = camera.single();
+    let mut cursor = cursor.single_mut();
+
+    let cursor_pos = window
+        .cursor_position()
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
+        .map(|ray| ray.origin.truncate());
+
+    let Some(pos) = cursor_pos else {
+        return;
+    };
+
+    let board_bound = draw_info.square_size * 4.0;
+
+    if pos.x < -board_bound || pos.x > board_bound || pos.y < -board_bound || pos.y > board_bound {
+        *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Default);
+        return;
+    }
+
+    let cur_square = Vec2::new(
+        ((pos.x + (board_bound)) / draw_info.square_size).ceil() - 1.,
+        ((pos.y + (board_bound)) / draw_info.square_size).ceil() - 1.,
+    );
+
+    let rank = Rank::from_index(cur_square.y as usize);
+    let file = File::from_index(cur_square.x as usize);
+    let square = Square::make_square(rank, file);
+    let square_bb = BitBoard::from_square(square);
+    let turn = board.0.side_to_move();
+    let board_bb = board.0.color_combined(turn);
+    let occupied = board_bb & square_bb;
+
+    if occupied.0 > 0 {
+        *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Grab);
+    } else {
+        *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Default);
     }
 }

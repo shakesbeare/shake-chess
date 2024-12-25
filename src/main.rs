@@ -1,5 +1,5 @@
 use anyhow::Result;
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow, winit::cursor::CursorIcon};
 
 fn main() -> Result<()> {
     App::new()
@@ -22,6 +22,7 @@ fn main() -> Result<()> {
                     shake_chess::render::draw_pieces,
                 )
                     .chain(),
+                shake_chess::render::mouse_hover,
             ),
         )
         .run();
@@ -29,7 +30,17 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn setup(mut commands: Commands, mut move_ev: EventWriter<shake_chess::game::MoveEvent>) {
+fn setup(
+    mut commands: Commands,
+    mut move_ev: EventWriter<shake_chess::game::MoveEvent>,
+    window: Query<Entity, With<Window>>,
+) {
+    for w in window.iter() {
+        commands
+            .entity(w)
+            .insert(CursorIcon::System(bevy::window::SystemCursorIcon::Default));
+    }
     commands.spawn(Camera2d);
     move_ev.send(shake_chess::game::MoveEvent(None));
 }
+
