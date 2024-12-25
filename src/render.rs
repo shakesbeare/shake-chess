@@ -27,7 +27,7 @@ pub fn update_draw_info(
     }
 
     for ev in window_ev.read() {
-        info!("{ev:?}");
+        debug!("{ev:?}");
     }
 
     let window = window.single();
@@ -58,7 +58,7 @@ pub fn draw_chessboard(
         return;
     }
     for _ in window_ev.read() {}
-    info!("Redrawing board...");
+    debug!("Redrawing board...");
 
     for entity in entities.iter() {
         commands.entity(entity).despawn();
@@ -66,18 +66,15 @@ pub fn draw_chessboard(
 
     let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
     commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::hex(LIGHT_SQUARE_COLOR).unwrap(),
-                custom_size: Some(Vec2::new(
-                    draw_info.square_size * BOARD_LENGTH as f32,
-                    draw_info.square_size * BOARD_LENGTH as f32,
-                )),
-                ..default()
-            },
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+        Sprite {
+            color: Srgba::hex(LIGHT_SQUARE_COLOR).unwrap().into(),
+            custom_size: Some(Vec2::new(
+                draw_info.square_size * BOARD_LENGTH as f32,
+                draw_info.square_size * BOARD_LENGTH as f32,
+            )),
             ..default()
         },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
         crate::Square,
     ));
 
@@ -87,26 +84,16 @@ pub fn draw_chessboard(
                 continue;
             }
             commands.spawn((
-                SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::hex(DARK_SQUARE_COLOR).unwrap(),
-                        custom_size: Some(Vec2::new(
-                            draw_info.square_size,
-                            draw_info.square_size,
-                        )),
-                        ..default()
-                    },
-                    transform: Transform::from_translation(Vec3::new(
-                        offset
-                            + (i as f32) * draw_info.square_size
-                            + (draw_info.square_size / 2.),
-                        offset
-                            + (j as f32) * draw_info.square_size
-                            + (draw_info.square_size / 2.),
-                        1.0,
-                    )),
+                Sprite {
+                    color: Srgba::hex(DARK_SQUARE_COLOR).unwrap().into(),
+                    custom_size: Some(Vec2::new(draw_info.square_size, draw_info.square_size)),
                     ..default()
                 },
+                Transform::from_translation(Vec3::new(
+                    offset + (i as f32) * draw_info.square_size + (draw_info.square_size / 2.),
+                    offset + (j as f32) * draw_info.square_size + (draw_info.square_size / 2.),
+                    1.0,
+                )),
                 crate::Square,
             ));
         }
@@ -126,18 +113,16 @@ pub fn draw_pieces(
         return;
     }
 
-    for ev in move_ev.read() {
-        info!("{ev:?}");
-    }
+    for _ in move_ev.read() {}
     for _ in window_ev.read() {}
-    info!("Redrawing pieces...");
+    trace!("Redrawing pieces...");
 
     // Every piece is despawned and recreated when a move occurs
     // This is because we have to synchronize the sprites with the `chess` representation
     //     of the pieces.
 
     for entity in entities.iter() {
-        commands.entity(entity).despawn();
+        commands.entity(entity).despawn_recursive();
     }
 
     let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
@@ -163,25 +148,18 @@ pub fn draw_pieces(
         };
         let svg = asset_server.load(filename);
         commands.spawn((
-            Svg2dBundle {
-                svg,
-                origin: Origin::Center,
-                transform: Transform::from_translation(Vec3::new(
-                    offset
-                        + file * draw_info.square_size
-                        + (draw_info.square_size / 2.),
-                    offset
-                        + rank * draw_info.square_size
-                        + (draw_info.square_size / 2.),
-                    2.0,
-                ))
-                .with_scale(Vec3::new(
-                    draw_info.square_size / SPRITE_SIZE,
-                    draw_info.square_size / SPRITE_SIZE,
-                    1.0,
-                )),
-                ..default()
-            },
+            Svg2d(svg.clone()),
+            Origin::Center,
+            Transform::from_translation(Vec3::new(
+                offset + file * draw_info.square_size + (draw_info.square_size / 2.),
+                offset + rank * draw_info.square_size + (draw_info.square_size / 2.),
+                2.0,
+            ))
+            .with_scale(Vec3::new(
+                draw_info.square_size / SPRITE_SIZE,
+                draw_info.square_size / SPRITE_SIZE,
+                1.0,
+            )),
             crate::Piece,
         ));
     }

@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-bevy = "0.12.1"
-bevy_svg = "0.12.0"
+bevy = "0.15.0"
+bevy_svg = { git = "https://github.com/shakesbeare/bevy_svg" } # waiting for https://github.com/Weasy666/bevy_svg/pull/44
 chess = "3.2.0"
