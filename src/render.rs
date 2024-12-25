@@ -4,8 +4,8 @@ use bevy_svg::prelude::*;
 
 const SPRITE_SIZE: f32 = 45.;
 const BOARD_LENGTH: i32 = 8;
-const VERT_BOARD_PERCENT: f32 = 0.75; // the proportion of the vertical space which the board takes up
-const HORI_BOARD_PERCENT: f32 = 0.50; // ... horizontal
+const VERT_BOARD_PERCENT: f32 = 0.90; // the max proportion of the vertical space which the board takes up
+const HORI_BOARD_PERCENT: f32 = 0.90; // ... horizontal
 
 const LIGHT_SQUARE_COLOR: &str = "#F0D9B5"; // stolen from lichess
 const DARK_SQUARE_COLOR: &str = "#B58863"; // ... again
@@ -35,11 +35,11 @@ pub fn update_draw_info(
     let height = window.height();
 
     let square_size = {
-        let board_horizontal_space = height * VERT_BOARD_PERCENT;
-        let board_allowed_space = width * HORI_BOARD_PERCENT;
+        let board_vertical_space = height * VERT_BOARD_PERCENT;
+        let board_horizontal_space = width * HORI_BOARD_PERCENT;
 
-        if board_horizontal_space > board_allowed_space {
-            board_allowed_space / BOARD_LENGTH as f32
+        if board_vertical_space > board_horizontal_space {
+            board_horizontal_space / BOARD_LENGTH as f32
         } else {
             (height * VERT_BOARD_PERCENT) / BOARD_LENGTH as f32
         }
@@ -115,7 +115,7 @@ pub fn draw_pieces(
 
     for _ in move_ev.read() {}
     for _ in window_ev.read() {}
-    trace!("Redrawing pieces...");
+    debug!("Redrawing pieces...");
 
     // Every piece is despawned and recreated when a move occurs
     // This is because we have to synchronize the sprites with the `chess` representation
