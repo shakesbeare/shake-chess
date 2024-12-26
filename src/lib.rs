@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments)]
 
-pub mod render;
 pub mod game;
+pub mod render;
 
 use bevy::prelude::{Component, Resource, States};
 

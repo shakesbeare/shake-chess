@@ -1,5 +1,9 @@
 use anyhow::Result;
-use bevy::{prelude::*, window::{WindowEvent, WindowResized}, winit::cursor::CursorIcon};
+use bevy::{
+    prelude::*,
+    window::{WindowEvent, WindowResized},
+    winit::cursor::CursorIcon,
+};
 use shake_chess::GameState;
 
 fn main() -> Result<()> {
@@ -64,7 +68,11 @@ fn setup(
     up_ev.send(shake_chess::game::SparseUpdateEvent);
 }
 
-fn toggle_switch_sides(mut up_ev: EventWriter<shake_chess::game::SparseUpdateEvent>, mut switch_sides: ResMut<shake_chess::SwitchSides>, input: Res<ButtonInput<KeyCode>>)  {
+fn toggle_switch_sides(
+    mut up_ev: EventWriter<shake_chess::game::SparseUpdateEvent>,
+    mut switch_sides: ResMut<shake_chess::SwitchSides>,
+    input: Res<ButtonInput<KeyCode>>,
+) {
     if input.just_pressed(KeyCode::Space) {
         switch_sides.0 = !switch_sides.0;
         up_ev.send(shake_chess::game::SparseUpdateEvent);

@@ -152,7 +152,11 @@ fn try_select(
     }
 }
 
-pub fn check_end(mut up_ev: EventReader<SparseUpdateEvent>, board: ResMut<Board>, mut state: ResMut<NextState<GameState>>) {
+pub fn check_end(
+    mut up_ev: EventReader<SparseUpdateEvent>,
+    board: ResMut<Board>,
+    mut state: ResMut<NextState<GameState>>,
+) {
     for _ in up_ev.read() {
         match board.status() {
             chess::BoardStatus::Ongoing => {}
@@ -161,9 +165,7 @@ pub fn check_end(mut up_ev: EventReader<SparseUpdateEvent>, board: ResMut<Board>
             }
             chess::BoardStatus::Checkmate => {
                 let color = !board.side_to_move();
-                state.set(GameState::Checkmate {
-                    winner: color,
-                });
+                state.set(GameState::Checkmate { winner: color });
                 info!("Checkmate! Winner: {:?}", color);
             }
         }

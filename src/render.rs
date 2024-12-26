@@ -237,12 +237,8 @@ pub fn render_selector(
                     ..default()
                 },
                 Transform::from_translation(Vec3::new(
-                    offset
-                        + file * draw_info.square_size
-                        + (draw_info.square_size / 2.),
-                    offset
-                        + rank * draw_info.square_size
-                        + (draw_info.square_size / 2.),
+                    offset + file * draw_info.square_size + (draw_info.square_size / 2.),
+                    offset + rank * draw_info.square_size + (draw_info.square_size / 2.),
                     2.0,
                 )),
                 crate::Selector,
@@ -266,7 +262,7 @@ pub fn render_selector(
                 let mut rank = m.get_rank().to_index() as f32;
                 let file = m.get_file().to_index() as f32;
 
-                if !is_white && switch_sides.0  {
+                if !is_white && switch_sides.0 {
                     rank = 7. - rank;
                 }
                 commands.spawn((
@@ -276,12 +272,8 @@ pub fn render_selector(
                         ..default()
                     },
                     Transform::from_translation(Vec3::new(
-                        offset
-                            + file * draw_info.square_size
-                            + (draw_info.square_size / 2.),
-                        offset
-                            + rank * draw_info.square_size
-                            + (draw_info.square_size / 2.),
+                        offset + file * draw_info.square_size + (draw_info.square_size / 2.),
+                        offset + rank * draw_info.square_size + (draw_info.square_size / 2.),
                         2.0,
                     )),
                     crate::Selector,
