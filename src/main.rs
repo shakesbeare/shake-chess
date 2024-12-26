@@ -10,6 +10,8 @@ fn main() -> Result<()> {
         ))
         .insert_resource(shake_chess::render::DrawInfo::default())
         .insert_resource(shake_chess::game::Board::default())
+        .insert_resource(shake_chess::game::PointedSquare::default())
+        .insert_resource(shake_chess::game::SelectedPiece::None)
         .add_event::<shake_chess::game::MoveEvent>()
         .add_systems(PreStartup, shake_chess::render::update_draw_info)
         .add_systems(Startup, (setup, shake_chess::game::setup_game))
@@ -22,7 +24,10 @@ fn main() -> Result<()> {
                     shake_chess::render::draw_pieces,
                 )
                     .chain(),
-                shake_chess::render::mouse_hover,
+                shake_chess::game::mouse_point,
+                shake_chess::render::cursor_swap,
+                shake_chess::game::select_piece,
+                shake_chess::render::render_selector,
             ),
         )
         .run();
@@ -43,4 +48,3 @@ fn setup(
     commands.spawn(Camera2d);
     move_ev.send(shake_chess::game::MoveEvent(None));
 }
-

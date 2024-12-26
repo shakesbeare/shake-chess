@@ -9,3 +9,5 @@ pub struct Piece;
 #[derive(Component)]
 pub struct Square;
 
+#[derive(Component)]
+pub struct Selector;

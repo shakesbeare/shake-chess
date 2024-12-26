@@ -4,6 +4,8 @@ use bevy::winit::cursor::CursorIcon;
 use bevy_svg::prelude::*;
 use chess::{BitBoard, File, Rank, Square};
 
+use crate::game::{PointedSquare, SelectedPiece};
+
 const SPRITE_SIZE: f32 = 45.;
 const BOARD_LENGTH: i32 = 8;
 const VERT_BOARD_PERCENT: f32 = 0.90; // the max proportion of the vertical space which the board takes up
@@ -11,12 +13,19 @@ const HORI_BOARD_PERCENT: f32 = 0.90; // ... horizontal
 
 const LIGHT_SQUARE_COLOR: &str = "#F0D9B5"; // stolen from lichess
 const DARK_SQUARE_COLOR: &str = "#B58863"; // ... again
+const SELECT_COLOR: &str = "#FFFFFF";
 pub const BACKGROUND_COLOR: &str = "#313338"; // stolen from discord
 
 #[allow(dead_code)]
 #[derive(Resource, Default, Debug)]
 pub struct DrawInfo {
     square_size: f32,
+}
+
+impl DrawInfo {
+    pub fn get_square_size(&self) -> f32 {
+        return self.square_size;
+    }
 }
 
 pub fn update_draw_info(
@@ -129,9 +138,9 @@ pub fn draw_pieces(
     }
 
     let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
-    for square in board.0.combined().into_iter() {
-        let color = board.0.color_on(square).unwrap();
-        let piece = board.0.piece_on(square).unwrap();
+    for square in board.combined().into_iter() {
+        let color = board.color_on(square).unwrap();
+        let piece = board.piece_on(square).unwrap();
         let rank = square.get_rank().to_index() as f32;
         let file = square.get_file().to_index() as f32;
 
@@ -156,7 +165,7 @@ pub fn draw_pieces(
             Transform::from_translation(Vec3::new(
                 offset + file * draw_info.square_size + (draw_info.square_size / 2.),
                 offset + rank * draw_info.square_size + (draw_info.square_size / 2.),
-                2.0,
+                3.0,
             ))
             .with_scale(Vec3::new(
                 draw_info.square_size / SPRITE_SIZE,
@@ -168,49 +177,91 @@ pub fn draw_pieces(
     }
 }
 
-pub fn mouse_hover(
+pub fn cursor_swap(
     mut cursor: Query<&mut CursorIcon>,
-    camera: Query<(&Camera, &GlobalTransform)>,
-    window: Query<&Window, With<PrimaryWindow>>,
-    draw_info: Res<DrawInfo>,
+    pointed_square: Res<PointedSquare>,
     board: Res<crate::game::Board>,
 ) {
-    let window = window.single();
-    let (camera, camera_transform) = camera.single();
-    let mut cursor = cursor.single_mut();
-
-    let cursor_pos = window
-        .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
-        .map(|ray| ray.origin.truncate());
-
-    let Some(pos) = cursor_pos else {
-        return;
-    };
-
-    let board_bound = draw_info.square_size * 4.0;
-
-    if pos.x < -board_bound || pos.x > board_bound || pos.y < -board_bound || pos.y > board_bound {
-        *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Default);
+    if pointed_square.is_none() {
         return;
     }
 
-    let cur_square = Vec2::new(
-        ((pos.x + (board_bound)) / draw_info.square_size).ceil() - 1.,
-        ((pos.y + (board_bound)) / draw_info.square_size).ceil() - 1.,
-    );
+    let mut cursor = cursor.single_mut();
+    let occupied = board.piece_on(pointed_square.unwrap());
 
-    let rank = Rank::from_index(cur_square.y as usize);
-    let file = File::from_index(cur_square.x as usize);
-    let square = Square::make_square(rank, file);
-    let square_bb = BitBoard::from_square(square);
-    let turn = board.0.side_to_move();
-    let board_bb = board.0.color_combined(turn);
-    let occupied = board_bb & square_bb;
-
-    if occupied.0 > 0 {
+    if occupied.is_some() {
         *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Grab);
     } else {
         *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Default);
+    }
+}
+
+pub fn render_selector(
+    mut commands: Commands,
+    selected_piece: Res<SelectedPiece>,
+    draw_info: Res<DrawInfo>,
+    query: Query<Entity, With<crate::Selector>>,
+    board: Res<crate::game::Board>,
+) {
+    for e in query.iter() {
+        commands.entity(e).despawn_recursive();
+    }
+
+    match *selected_piece {
+        SelectedPiece::None => {}
+        SelectedPiece::Some { piece, square } => {
+            let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
+            commands.spawn((
+                Sprite {
+                    color: Srgba::hex(SELECT_COLOR).unwrap().into(),
+                    custom_size: Some(Vec2::new(draw_info.square_size, draw_info.square_size)),
+                    ..default()
+                },
+                Transform::from_translation(Vec3::new(
+                    offset
+                        + (square.get_file().to_index() as f32) * draw_info.square_size
+                        + (draw_info.square_size / 2.),
+                    offset
+                        + (square.get_rank().to_index() as f32) * draw_info.square_size
+                        + (draw_info.square_size / 2.),
+                    2.0,
+                )),
+                crate::Selector,
+            ));
+            let self_bitboard = board.color_combined(board.side_to_move());
+            let moves = match piece {
+                chess::Piece::Pawn => {
+                    chess::get_pawn_moves(square, board.side_to_move(), *board.combined())
+                }
+                chess::Piece::Knight => chess::get_knight_moves(square),
+                chess::Piece::Bishop => chess::get_bishop_moves(square, *board.combined()),
+                chess::Piece::Rook => chess::get_rook_moves(square, *board.combined()),
+                chess::Piece::Queen => {
+                    chess::get_bishop_moves(square, *board.combined())
+                        | chess::get_rook_moves(square, *board.combined())
+                }
+                chess::Piece::King => chess::get_king_moves(square),
+            } & !self_bitboard;
+
+            for m in moves.into_iter() {
+                commands.spawn((
+                    Sprite {
+                        color: Srgba::hex("#88888890").unwrap().into(),
+                        custom_size: Some(Vec2::new(draw_info.square_size, draw_info.square_size)),
+                        ..default()
+                    },
+                    Transform::from_translation(Vec3::new(
+                        offset
+                            + (m.get_file().to_index() as f32) * draw_info.square_size
+                            + (draw_info.square_size / 2.),
+                        offset
+                            + (m.get_rank().to_index() as f32) * draw_info.square_size
+                            + (draw_info.square_size / 2.),
+                        2.0,
+                    )),
+                    crate::Selector,
+                ));
+            }
+        }
     }
 }
