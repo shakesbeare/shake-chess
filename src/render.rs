@@ -92,7 +92,7 @@ pub fn draw_chessboard(
 
     for i in 0..BOARD_LENGTH {
         for j in 0..BOARD_LENGTH {
-            if (i + j) % 2 == 0 {
+            if (i + j) % 2 == 1 {
                 continue;
             }
             commands.spawn((
