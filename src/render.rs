@@ -3,7 +3,7 @@ use bevy::window::WindowResized;
 use bevy::winit::cursor::CursorIcon;
 use bevy_svg::prelude::*;
 
-use crate::game::{PointedSquare, SelectedPiece};
+use crate::{game::{PointedSquare, SelectedPiece}, TurnEndEvent};
 
 const SPRITE_SIZE: f32 = 45.;
 const BOARD_LENGTH: i32 = 8;
@@ -31,14 +31,14 @@ pub fn update_draw_info(
     window: Query<&Window>,
     mut window_ev: EventReader<WindowResized>,
     mut draw_info: ResMut<DrawInfo>,
+    mut up_ev: EventReader<TurnEndEvent>,
 ) {
-    if window_ev.is_empty() {
+    if up_ev.is_empty() && window_ev.is_empty() {
         return;
     }
 
-    for ev in window_ev.read() {
-        debug!("{ev:?}");
-    }
+    for _ in window_ev.read() {}
+    for _ in up_ev.read() {}
 
     let window = window.single();
     let width = window.width();
@@ -63,10 +63,12 @@ pub fn draw_chessboard(
     entities: Query<Entity, With<crate::Square>>,
     mut commands: Commands,
     mut window_ev: EventReader<WindowResized>,
+    mut up_ev: EventReader<TurnEndEvent>,
 ) {
-    if window_ev.is_empty() {
+    if up_ev.is_empty() && window_ev.is_empty() {
         return;
     }
+    for _ in up_ev.read() {}
     for _ in window_ev.read() {}
     debug!("Redrawing board...");
 
@@ -118,14 +120,14 @@ pub fn draw_pieces(
     draw_info: Res<DrawInfo>,
     entities: Query<Entity, With<crate::Piece>>,
     asset_server: Res<AssetServer>,
-    mut move_ev: EventReader<crate::game::SparseUpdateEvent>,
+    mut up_ev: EventReader<TurnEndEvent>,
     mut window_ev: EventReader<WindowResized>,
 ) {
-    if move_ev.is_empty() && window_ev.is_empty() {
+    if up_ev.is_empty() && window_ev.is_empty() {
         return;
     }
 
-    for _ in move_ev.read() {}
+    for _ in up_ev.read() {}
     for _ in window_ev.read() {}
     debug!("Redrawing pieces...");
 

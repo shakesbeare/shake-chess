@@ -1,13 +1,10 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use chess::{ChessMove, File, Piece, Rank, Square};
 
-use crate::{render::DrawInfo, GameState, SideToMove};
+use crate::{render::DrawInfo, GameState, Last50, SideToMove, TurnEndEvent};
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct Board(chess::Board);
-
-#[derive(Event, Debug)]
-pub struct SparseUpdateEvent;
 
 pub fn setup_game(mut board: ResMut<Board>) {
     board.0 = chess::Board::default();
@@ -77,7 +74,8 @@ pub fn act(
     mut side_to_move: ResMut<SideToMove>,
     mut board: ResMut<Board>,
     mut selected_piece: ResMut<SelectedPiece>,
-    mut move_writer: EventWriter<SparseUpdateEvent>,
+    mut move_writer: EventWriter<TurnEndEvent>,
+    mut last_50: ResMut<Last50>,
 ) {
     if input.just_pressed(MouseButton::Left) && pointed_square.is_some() {
         let square = pointed_square.unwrap();
@@ -96,6 +94,7 @@ pub fn act(
                     board.as_mut(),
                     selected_piece.as_mut(),
                     side_to_move.as_mut(),
+                    last_50.as_mut(),
                 );
             }
             (SelectedPiece::Some { square: source, .. }, Some(col)) => {
@@ -108,11 +107,12 @@ pub fn act(
                         board.as_mut(),
                         selected_piece.as_mut(),
                         side_to_move.as_mut(),
+                        last_50.as_mut(),
                     );
                 }
             }
         }
-        move_writer.send(SparseUpdateEvent);
+        move_writer.send(TurnEndEvent);
     }
 }
 
@@ -123,13 +123,17 @@ fn make_move(
     board: &mut Board,
     selected_piece: &mut SelectedPiece,
     side_to_move: &mut SideToMove,
+    last_50: &mut Last50,
 ) {
     // TODO: promotion
     let m = ChessMove::new(source, dest, None);
     if board.legal(m) {
+        let p = board.piece_on(source).unwrap();
+        let t = board.piece_on(dest);
         **board = board.make_move_new(m);
         *selected_piece = SelectedPiece::None;
         side_to_move.0 = board.side_to_move();
+        last_50.push(p == Piece::Pawn || t.is_some());
     } else {
         *selected_piece = SelectedPiece::None;
     }
@@ -153,19 +157,30 @@ fn try_select(
 }
 
 pub fn check_end(
-    mut up_ev: EventReader<SparseUpdateEvent>,
+    mut up_ev: EventReader<TurnEndEvent>,
     board: ResMut<Board>,
     mut state: ResMut<NextState<GameState>>,
+    mut result: ResMut<crate::GameResult>,
+    last_50: Res<Last50>,
 ) {
     for _ in up_ev.read() {
+        if last_50.should_draw() {
+            state.set(GameState::End);
+            *result = crate::GameResult::Stalemate;
+            info!("Stalemate");
+            return;
+        }
         match board.status() {
             chess::BoardStatus::Ongoing => {}
             chess::BoardStatus::Stalemate => {
+                state.set(GameState::End);
+                *result = crate::GameResult::Stalemate;
                 info!("Stalemate");
             }
             chess::BoardStatus::Checkmate => {
                 let color = !board.side_to_move();
-                state.set(GameState::Checkmate { winner: color });
+                state.set(GameState::End);
+                *result = crate::GameResult::Checkmate { winner: color };
                 info!("Checkmate! Winner: {:?}", color);
             }
         }
