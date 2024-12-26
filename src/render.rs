@@ -113,6 +113,7 @@ pub fn draw_chessboard(
 pub fn draw_pieces(
     mut commands: Commands,
     board: Res<crate::game::Board>,
+    side_to_move: Res<crate::SideToMove>,
     draw_info: Res<DrawInfo>,
     entities: Query<Entity, With<crate::Piece>>,
     asset_server: Res<AssetServer>,
@@ -137,11 +138,16 @@ pub fn draw_pieces(
     }
 
     let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
+    let is_white = side_to_move.0 == chess::Color::White;
     for square in board.combined().into_iter() {
         let color = board.color_on(square).unwrap();
         let piece = board.piece_on(square).unwrap();
-        let rank = square.get_rank().to_index() as f32;
+        let mut rank = square.get_rank().to_index() as f32;
         let file = square.get_file().to_index() as f32;
+
+        if !is_white {
+            rank = 7. - rank;
+        }
 
         let filename = match (piece, color) {
             (chess::Piece::Pawn, chess::Color::White) => "white_pawn.svg",
@@ -200,6 +206,7 @@ pub fn cursor_swap(
 pub fn render_selector(
     mut commands: Commands,
     selected_piece: Res<SelectedPiece>,
+    side_to_move: Res<crate::SideToMove>,
     draw_info: Res<DrawInfo>,
     query: Query<Entity, With<crate::Selector>>,
     board: Res<crate::game::Board>,
@@ -208,9 +215,18 @@ pub fn render_selector(
         commands.entity(e).despawn_recursive();
     }
 
+    let is_white = side_to_move.0 == chess::Color::White;
+
     match *selected_piece {
         SelectedPiece::None => {}
         SelectedPiece::Some { piece, square } => {
+            let mut rank = square.get_rank().to_index() as f32;
+            let file = square.get_file().to_index() as f32;
+
+            if !is_white {
+                rank = 7. - rank;
+            }
+
             let offset = -draw_info.square_size * BOARD_LENGTH as f32 / 2.;
             commands.spawn((
                 Sprite {
@@ -220,10 +236,10 @@ pub fn render_selector(
                 },
                 Transform::from_translation(Vec3::new(
                     offset
-                        + (square.get_file().to_index() as f32) * draw_info.square_size
+                        + file * draw_info.square_size
                         + (draw_info.square_size / 2.),
                     offset
-                        + (square.get_rank().to_index() as f32) * draw_info.square_size
+                        + rank * draw_info.square_size
                         + (draw_info.square_size / 2.),
                     2.0,
                 )),
@@ -245,6 +261,12 @@ pub fn render_selector(
             } & !self_bitboard;
 
             for m in moves.into_iter() {
+                let mut rank = m.get_rank().to_index() as f32;
+                let file = m.get_file().to_index() as f32;
+
+                if !is_white {
+                    rank = 7. - rank;
+                }
                 commands.spawn((
                     Sprite {
                         color: Srgba::hex("#88888890").unwrap().into(),
@@ -253,10 +275,10 @@ pub fn render_selector(
                     },
                     Transform::from_translation(Vec3::new(
                         offset
-                            + (m.get_file().to_index() as f32) * draw_info.square_size
+                            + file * draw_info.square_size
                             + (draw_info.square_size / 2.),
                         offset
-                            + (m.get_rank().to_index() as f32) * draw_info.square_size
+                            + rank * draw_info.square_size
                             + (draw_info.square_size / 2.),
                         2.0,
                     )),

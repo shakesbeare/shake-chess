@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use chess::{ChessMove, File, Piece, Rank, Square};
 
-use crate::{render::DrawInfo, GameState};
+use crate::{render::DrawInfo, GameState, SideToMove};
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct Board(chess::Board);
@@ -31,9 +31,11 @@ pub enum SelectedPiece {
 pub fn mouse_point(
     camera: Query<(&Camera, &GlobalTransform)>,
     window: Query<&Window, With<PrimaryWindow>>,
+    side_to_move: Res<crate::SideToMove>,
     draw_info: Res<DrawInfo>,
     mut pointed_square: ResMut<PointedSquare>,
 ) {
+    let is_white = side_to_move.0 == chess::Color::White;
     let window = window.single();
     let (camera, camera_transform) = camera.single();
     let cursor_pos = window
@@ -53,10 +55,14 @@ pub fn mouse_point(
         return;
     }
 
-    let cur_square = Vec2::new(
+    let mut cur_square = Vec2::new(
         ((pos.x + (board_bound)) / square_size).ceil() - 1.,
         ((pos.y + (board_bound)) / square_size).ceil() - 1.,
     );
+
+    if !is_white {
+        cur_square.y = 7. - cur_square.y;
+    }
 
     let rank = Rank::from_index(cur_square.y as usize);
     let file = File::from_index(cur_square.x as usize);
@@ -67,6 +73,7 @@ pub fn mouse_point(
 pub fn act(
     pointed_square: Res<PointedSquare>,
     input: Res<ButtonInput<MouseButton>>,
+    mut side_to_move: ResMut<SideToMove>,
     mut board: ResMut<Board>,
     mut selected_piece: ResMut<SelectedPiece>,
     mut move_writer: EventWriter<MoveEvent>,
@@ -87,6 +94,7 @@ pub fn act(
                     None,
                     board.as_mut(),
                     selected_piece.as_mut(),
+                    side_to_move.as_mut(),
                 );
             }
             (SelectedPiece::Some { square: source, .. }, Some(col)) => {
@@ -98,6 +106,7 @@ pub fn act(
                         None,
                         board.as_mut(),
                         selected_piece.as_mut(),
+                        side_to_move.as_mut(),
                     );
                 }
             }
@@ -112,12 +121,14 @@ fn make_move(
     promotion: Option<Piece>,
     board: &mut Board,
     selected_piece: &mut SelectedPiece,
+    side_to_move: &mut SideToMove,
 ) {
     // TODO: promotion
     let m = ChessMove::new(source, dest, None);
     if board.legal(m) {
         **board = board.make_move_new(m);
         *selected_piece = SelectedPiece::None;
+        side_to_move.0 = board.side_to_move();
     } else {
         *selected_piece = SelectedPiece::None;
     }

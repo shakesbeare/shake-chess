@@ -13,6 +13,7 @@ fn main() -> Result<()> {
         .insert_resource(shake_chess::game::Board::default())
         .insert_resource(shake_chess::game::PointedSquare::default())
         .insert_resource(shake_chess::game::SelectedPiece::None)
+        .insert_resource(shake_chess::SideToMove(chess::Color::White))
         .init_state::<GameState>()
         .add_event::<shake_chess::game::MoveEvent>()
         .add_systems(PreStartup, shake_chess::render::update_draw_info)
@@ -24,12 +25,12 @@ fn main() -> Result<()> {
                 (
                     shake_chess::render::draw_chessboard,
                     shake_chess::render::draw_pieces,
+                    shake_chess::game::act,
                 )
                     .chain(),
                 (
                     shake_chess::game::mouse_point,
                     shake_chess::render::cursor_swap,
-                    shake_chess::game::act,
                     shake_chess::render::render_selector,
                     shake_chess::game::check_end,
                 )

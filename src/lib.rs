@@ -1,7 +1,9 @@
+#![allow(clippy::too_many_arguments)]
+
 pub mod render;
 pub mod game;
 
-use bevy::prelude::{Component, States};
+use bevy::prelude::{Component, Resource, States};
 
 #[derive(Component)]
 pub struct Piece;
@@ -21,3 +23,6 @@ pub enum GameState {
     },
     Stalemate,
 }
+
+#[derive(Resource)]
+pub struct SideToMove(pub chess::Color);
