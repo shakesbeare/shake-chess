@@ -75,34 +75,41 @@ pub fn end_screen(
         GameResult::Stalemate => String::from("Draw"),
     };
     let ctx = contexts.ctx_mut();
-    egui::CentralPanel::default().show(ctx, |ui| {
-        ui.vertical_centered(|ui| {
-            ui.style_mut().visuals.panel_fill = Color32::from_hex(BACKGROUND_COLOR).unwrap();
-            ui.add_space(301.0 - 100.0);
-            ui.heading(RichText::new(header).font(FontId::proportional(40.0)));
+    egui::SidePanel::right("")
+        .show_separator_line(false)
+        .resizable(false)
+        .exact_width(316.)
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.ctx().set_visuals(egui::Visuals {
+                    panel_fill: Color32::from_hex(BACKGROUND_COLOR).unwrap(),
+                    ..default()
+                });
+                ui.add_space(301.0 - 100.0);
+                ui.heading(RichText::new(header).font(FontId::proportional(40.0)));
 
-            let go_again = ui.button(RichText::new("Restart").font(FontId::proportional(30.0)));
-            let return_to_menu =
-                ui.button(RichText::new("Return to Menu").font(FontId::proportional(30.0)));
+                let go_again = ui.button(RichText::new("Restart").font(FontId::proportional(30.0)));
+                let return_to_menu =
+                    ui.button(RichText::new("Return to Menu").font(FontId::proportional(30.0)));
 
-            if go_again.clicked() {
-                up_ev.send(TurnEndEvent);
-                state.set(GameState::Playing);
-                *board = crate::game::Board::default();
-                *last_50 = crate::Last50::default();
-                for e in drawn.iter() {
-                    commands.entity(e).despawn_recursive();
+                if go_again.clicked() {
+                    up_ev.send(TurnEndEvent);
+                    state.set(GameState::Playing);
+                    *board = crate::game::Board::default();
+                    *last_50 = crate::Last50::default();
+                    for e in drawn.iter() {
+                        commands.entity(e).despawn_recursive();
+                    }
                 }
-            }
 
-            if return_to_menu.clicked() {
-                *board = crate::game::Board::default();
-                *last_50 = crate::Last50::default();
-                state.set(GameState::MainMenu);
-                for e in drawn.iter() {
-                    commands.entity(e).despawn_recursive();
+                if return_to_menu.clicked() {
+                    *board = crate::game::Board::default();
+                    *last_50 = crate::Last50::default();
+                    state.set(GameState::MainMenu);
+                    for e in drawn.iter() {
+                        commands.entity(e).despawn_recursive();
+                    }
                 }
-            }
+            });
         });
-    });
 }

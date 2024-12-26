@@ -4,7 +4,7 @@ use bevy::{
     window::{WindowEvent, WindowResized},
     winit::cursor::CursorIcon,
 };
-use bevy_egui::{egui, EguiContexts};
+use bevy_egui::{egui::self, EguiContexts};
 use shake_chess::GameState;
 
 fn main() -> Result<()> {
@@ -78,14 +78,20 @@ fn setup(
     mut commands: Commands,
     mut up_ev: EventWriter<shake_chess::TurnEndEvent>,
     mut window_ev: EventWriter<WindowResized>,
-    window: Query<Entity, With<Window>>,
+    mut window: Query<(Entity, &mut Window)>,
 ) {
-    for w in window.iter() {
+    for (e, mut window) in window.iter_mut() {
         commands
-            .entity(w)
+            .entity(e)
             .insert(CursorIcon::System(bevy::window::SystemCursorIcon::Default));
+        window.resize_constraints = WindowResizeConstraints {
+            min_width: 1280.,
+            min_height: 720.,
+            max_width: f32::MAX,
+            max_height: f32::MAX,
+        };
         window_ev.send(WindowResized {
-            window: w,
+            window: e,
             width: 1280.,
             height: 720.,
         });
