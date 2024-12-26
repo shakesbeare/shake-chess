@@ -79,56 +79,67 @@ pub fn act(
             (SelectedPiece::None, None) => return,
             (SelectedPiece::None, Some(col)) => {
                 // try selecting a piece
-                if col == board.side_to_move() {
-                    *selected_piece = SelectedPiece::Some {
-                        square,
-                        piece: board.piece_on(square).unwrap(),
-                    }
-                }
-
+                try_select(col, square, board.as_mut(), selected_piece.as_mut());
             }
-            (
-                SelectedPiece::Some {
-                    square: source,
-                    ..
-                },
-                None,
-            ) => {
+            (SelectedPiece::Some { square: source, .. }, None) => {
                 // try making a move
                 // TODO: promotion
-                let m = ChessMove::new(source, square, None);
-                if board.legal(m) {
-                    **board = board.make_move_new(m);
-                    *selected_piece = SelectedPiece::None;
-                } else {
-                    *selected_piece = SelectedPiece::None;
-                }
+                make_move(
+                    source,
+                    square,
+                    None,
+                    board.as_mut(),
+                    selected_piece.as_mut(),
+                );
             }
-            (
-                SelectedPiece::Some {
-                    square: source,
-                    ..
-                },
-                Some(col),
-            ) => {
-                // move or try select
-                if col == board.side_to_move() {
-                    *selected_piece = SelectedPiece::Some {
+            (SelectedPiece::Some { square: source, .. }, Some(col)) => {
+                // try move or try select
+                if try_select(col, square, board.as_mut(), selected_piece.as_mut()) {} 
+                else {
+                    make_move(
+                        source,
                         square,
-                        piece: board.piece_on(square).unwrap(),
-                    }
-                } else {
-                    // TODO: promotion
-                    let m = ChessMove::new(source, square, None);
-                    if board.legal(m) {
-                        **board = board.make_move_new(m);
-                        *selected_piece = SelectedPiece::None;
-                    } else {
-                        *selected_piece = SelectedPiece::None;
-                    }
+                        None,
+                        board.as_mut(),
+                        selected_piece.as_mut(),
+                    );
                 }
             }
         }
         move_writer.send(MoveEvent(None));
+    }
+}
+
+fn make_move(
+    source: Square,
+    dest: Square,
+    promotion: Option<Piece>,
+    board: &mut Board,
+    selected_piece: &mut SelectedPiece,
+) {
+    // TODO: promotion
+    let m = ChessMove::new(source, dest, None);
+    if board.legal(m) {
+        **board = board.make_move_new(m);
+        *selected_piece = SelectedPiece::None;
+    } else {
+        *selected_piece = SelectedPiece::None;
+    }
+}
+
+fn try_select(
+    target_color: chess::Color,
+    square: Square,
+    board: &mut Board,
+    selected_piece: &mut SelectedPiece,
+) -> bool {
+    if target_color == board.side_to_move() {
+        *selected_piece = SelectedPiece::Some {
+            square,
+            piece: board.piece_on(square).unwrap(),
+        };
+        true
+    } else {
+        false
     }
 }
