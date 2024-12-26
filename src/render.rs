@@ -64,6 +64,8 @@ pub fn draw_chessboard(
     mut commands: Commands,
     mut window_ev: EventReader<WindowResized>,
     mut up_ev: EventReader<TurnEndEvent>,
+    side_to_move: Res<crate::SideToMove>,
+    switch_sides: Res<crate::SwitchSides>,
 ) {
     if up_ev.is_empty() && window_ev.is_empty() {
         return;
@@ -90,9 +92,12 @@ pub fn draw_chessboard(
         crate::Square,
     ));
 
+    let is_white = side_to_move.0 == chess::Color::White;
+    let draw_offset_divisor = if !is_white && switch_sides.0 { 0 } else { 1 };
+
     for i in 0..BOARD_LENGTH {
         for j in 0..BOARD_LENGTH {
-            if (i + j) % 2 == 1 {
+            if (i + j) % 2 == draw_offset_divisor {
                 continue;
             }
             commands.spawn((
