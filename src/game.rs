@@ -1,13 +1,13 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use chess::{ChessMove, File, Piece, Rank, Square};
 
-use crate::render::DrawInfo;
+use crate::{render::DrawInfo, GameState};
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct Board(chess::Board);
 
 #[derive(Event, Debug)]
-pub struct MoveEvent(pub Option<chess::ChessMove>);
+pub struct MoveEvent;
 
 pub fn setup_game(mut board: ResMut<Board>) {
     board.0 = chess::Board::default();
@@ -78,12 +78,9 @@ pub fn act(
         match (*selected_piece, target_col) {
             (SelectedPiece::None, None) => return,
             (SelectedPiece::None, Some(col)) => {
-                // try selecting a piece
                 try_select(col, square, board.as_mut(), selected_piece.as_mut());
             }
             (SelectedPiece::Some { square: source, .. }, None) => {
-                // try making a move
-                // TODO: promotion
                 make_move(
                     source,
                     square,
@@ -93,9 +90,8 @@ pub fn act(
                 );
             }
             (SelectedPiece::Some { square: source, .. }, Some(col)) => {
-                // try move or try select
-                if try_select(col, square, board.as_mut(), selected_piece.as_mut()) {} 
-                else {
+                if try_select(col, square, board.as_mut(), selected_piece.as_mut()) {
+                } else {
                     make_move(
                         source,
                         square,
@@ -106,7 +102,7 @@ pub fn act(
                 }
             }
         }
-        move_writer.send(MoveEvent(None));
+        move_writer.send(MoveEvent);
     }
 }
 
@@ -141,5 +137,23 @@ fn try_select(
         true
     } else {
         false
+    }
+}
+
+pub fn check_end(mut move_ev: EventReader<MoveEvent>, board: ResMut<Board>, mut state: ResMut<NextState<GameState>>) {
+    for _ in move_ev.read() {
+        match board.status() {
+            chess::BoardStatus::Ongoing => {}
+            chess::BoardStatus::Stalemate => {
+                info!("Stalemate");
+            }
+            chess::BoardStatus::Checkmate => {
+                let color = !board.side_to_move();
+                state.set(GameState::Checkmate {
+                    winner: color,
+                });
+                info!("Checkmate! Winner: {:?}", color);
+            }
+        }
     }
 }

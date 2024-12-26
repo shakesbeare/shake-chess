@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use bevy::window::{PrimaryWindow, WindowResized};
+use bevy::window::WindowResized;
 use bevy::winit::cursor::CursorIcon;
 use bevy_svg::prelude::*;
-use chess::{BitBoard, File, Rank, Square};
 
 use crate::game::{PointedSquare, SelectedPiece};
 
@@ -13,7 +12,7 @@ const HORI_BOARD_PERCENT: f32 = 0.90; // ... horizontal
 
 const LIGHT_SQUARE_COLOR: &str = "#F0D9B5"; // stolen from lichess
 const DARK_SQUARE_COLOR: &str = "#B58863"; // ... again
-const SELECT_COLOR: &str = "#FFFFFF";
+const SELECT_COLOR: &str = "#ADD8E6";
 pub const BACKGROUND_COLOR: &str = "#313338"; // stolen from discord
 
 #[allow(dead_code)]
