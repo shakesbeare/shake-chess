@@ -7,7 +7,7 @@ use crate::{render::DrawInfo, GameState, SideToMove};
 pub struct Board(chess::Board);
 
 #[derive(Event, Debug)]
-pub struct MoveEvent;
+pub struct SparseUpdateEvent;
 
 pub fn setup_game(mut board: ResMut<Board>) {
     board.0 = chess::Board::default();
@@ -32,6 +32,7 @@ pub fn mouse_point(
     camera: Query<(&Camera, &GlobalTransform)>,
     window: Query<&Window, With<PrimaryWindow>>,
     side_to_move: Res<crate::SideToMove>,
+    switch_sides: Res<crate::SwitchSides>,
     draw_info: Res<DrawInfo>,
     mut pointed_square: ResMut<PointedSquare>,
 ) {
@@ -60,7 +61,7 @@ pub fn mouse_point(
         ((pos.y + (board_bound)) / square_size).ceil() - 1.,
     );
 
-    if !is_white {
+    if !is_white && switch_sides.0 {
         cur_square.y = 7. - cur_square.y;
     }
 
@@ -76,7 +77,7 @@ pub fn act(
     mut side_to_move: ResMut<SideToMove>,
     mut board: ResMut<Board>,
     mut selected_piece: ResMut<SelectedPiece>,
-    mut move_writer: EventWriter<MoveEvent>,
+    mut move_writer: EventWriter<SparseUpdateEvent>,
 ) {
     if input.just_pressed(MouseButton::Left) && pointed_square.is_some() {
         let square = pointed_square.unwrap();
@@ -111,7 +112,7 @@ pub fn act(
                 }
             }
         }
-        move_writer.send(MoveEvent);
+        move_writer.send(SparseUpdateEvent);
     }
 }
 
@@ -151,8 +152,8 @@ fn try_select(
     }
 }
 
-pub fn check_end(mut move_ev: EventReader<MoveEvent>, board: ResMut<Board>, mut state: ResMut<NextState<GameState>>) {
-    for _ in move_ev.read() {
+pub fn check_end(mut up_ev: EventReader<SparseUpdateEvent>, board: ResMut<Board>, mut state: ResMut<NextState<GameState>>) {
+    for _ in up_ev.read() {
         match board.status() {
             chess::BoardStatus::Ongoing => {}
             chess::BoardStatus::Stalemate => {

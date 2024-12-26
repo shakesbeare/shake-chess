@@ -26,3 +26,6 @@ pub enum GameState {
 
 #[derive(Resource)]
 pub struct SideToMove(pub chess::Color);
+
+#[derive(Resource)]
+pub struct SwitchSides(pub bool);

@@ -114,10 +114,11 @@ pub fn draw_pieces(
     mut commands: Commands,
     board: Res<crate::game::Board>,
     side_to_move: Res<crate::SideToMove>,
+    switch_sides: Res<crate::SwitchSides>,
     draw_info: Res<DrawInfo>,
     entities: Query<Entity, With<crate::Piece>>,
     asset_server: Res<AssetServer>,
-    mut move_ev: EventReader<crate::game::MoveEvent>,
+    mut move_ev: EventReader<crate::game::SparseUpdateEvent>,
     mut window_ev: EventReader<WindowResized>,
 ) {
     if move_ev.is_empty() && window_ev.is_empty() {
@@ -145,7 +146,7 @@ pub fn draw_pieces(
         let mut rank = square.get_rank().to_index() as f32;
         let file = square.get_file().to_index() as f32;
 
-        if !is_white {
+        if !is_white && switch_sides.0 {
             rank = 7. - rank;
         }
 
@@ -207,6 +208,7 @@ pub fn render_selector(
     mut commands: Commands,
     selected_piece: Res<SelectedPiece>,
     side_to_move: Res<crate::SideToMove>,
+    switch_sides: Res<crate::SwitchSides>,
     draw_info: Res<DrawInfo>,
     query: Query<Entity, With<crate::Selector>>,
     board: Res<crate::game::Board>,
@@ -223,7 +225,7 @@ pub fn render_selector(
             let mut rank = square.get_rank().to_index() as f32;
             let file = square.get_file().to_index() as f32;
 
-            if !is_white {
+            if !is_white && switch_sides.0 {
                 rank = 7. - rank;
             }
 
@@ -264,7 +266,7 @@ pub fn render_selector(
                 let mut rank = m.get_rank().to_index() as f32;
                 let file = m.get_file().to_index() as f32;
 
-                if !is_white {
+                if !is_white && switch_sides.0  {
                     rank = 7. - rank;
                 }
                 commands.spawn((
