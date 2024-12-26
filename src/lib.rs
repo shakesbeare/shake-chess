@@ -1,7 +1,7 @@
 pub mod render;
 pub mod game;
 
-use bevy::prelude::Component;
+use bevy::prelude::{Component, States};
 
 #[derive(Component)]
 pub struct Piece;

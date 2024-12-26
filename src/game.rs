@@ -1,11 +1,10 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use chess::{File, Rank, Square, Piece};
+use chess::{ChessMove, File, Piece, Rank, Square};
 
 use crate::render::DrawInfo;
 
 #[derive(Resource, Default, Deref, DerefMut)]
 pub struct Board(chess::Board);
-
 
 #[derive(Event, Debug)]
 pub struct MoveEvent(pub Option<chess::ChessMove>);
@@ -23,13 +22,10 @@ impl PointedSquare {
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Clone, Copy)]
 pub enum SelectedPiece {
     None,
-    Some {
-        piece: Piece,
-        square: Square,
-    },
+    Some { piece: Piece, square: Square },
 }
 
 pub fn mouse_point(
@@ -68,19 +64,71 @@ pub fn mouse_point(
     pointed_square.set(square);
 }
 
-pub fn select_piece(pointed_square: Res<PointedSquare>, input: Res<ButtonInput<MouseButton>>, board: Res<Board>, mut selected_piece: ResMut<SelectedPiece>) {
-    if input.pressed(MouseButton::Left) && pointed_square.is_some() {
+pub fn act(
+    pointed_square: Res<PointedSquare>,
+    input: Res<ButtonInput<MouseButton>>,
+    mut board: ResMut<Board>,
+    mut selected_piece: ResMut<SelectedPiece>,
+    mut move_writer: EventWriter<MoveEvent>,
+) {
+    if input.just_pressed(MouseButton::Left) && pointed_square.is_some() {
         let square = pointed_square.unwrap();
-        let turn = board.side_to_move();
-        if board.color_on(square).is_some() && board.color_on(square).unwrap() != turn {
-            return;
-        }
+        let target_col = board.color_on(square);
 
-        if let Some(piece) = board.piece_on(square) {
-            *selected_piece = SelectedPiece::Some {
-                piece,
-                square,
+        match (*selected_piece, target_col) {
+            (SelectedPiece::None, None) => return,
+            (SelectedPiece::None, Some(col)) => {
+                // try selecting a piece
+                if col == board.side_to_move() {
+                    *selected_piece = SelectedPiece::Some {
+                        square,
+                        piece: board.piece_on(square).unwrap(),
+                    }
+                }
+
+            }
+            (
+                SelectedPiece::Some {
+                    square: source,
+                    ..
+                },
+                None,
+            ) => {
+                // try making a move
+                // TODO: promotion
+                let m = ChessMove::new(source, square, None);
+                if board.legal(m) {
+                    **board = board.make_move_new(m);
+                    *selected_piece = SelectedPiece::None;
+                } else {
+                    *selected_piece = SelectedPiece::None;
+                }
+            }
+            (
+                SelectedPiece::Some {
+                    square: source,
+                    ..
+                },
+                Some(col),
+            ) => {
+                // move or try select
+                if col == board.side_to_move() {
+                    *selected_piece = SelectedPiece::Some {
+                        square,
+                        piece: board.piece_on(square).unwrap(),
+                    }
+                } else {
+                    // TODO: promotion
+                    let m = ChessMove::new(source, square, None);
+                    if board.legal(m) {
+                        **board = board.make_move_new(m);
+                        *selected_piece = SelectedPiece::None;
+                    } else {
+                        *selected_piece = SelectedPiece::None;
+                    }
+                }
             }
         }
+        move_writer.send(MoveEvent(None));
     }
 }

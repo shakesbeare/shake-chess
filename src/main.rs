@@ -26,7 +26,7 @@ fn main() -> Result<()> {
                     .chain(),
                 shake_chess::game::mouse_point,
                 shake_chess::render::cursor_swap,
-                shake_chess::game::select_piece,
+                shake_chess::game::act,
                 shake_chess::render::render_selector,
             ),
         )

@@ -182,11 +182,13 @@ pub fn cursor_swap(
     pointed_square: Res<PointedSquare>,
     board: Res<crate::game::Board>,
 ) {
+    let mut cursor = cursor.single_mut();
+
     if pointed_square.is_none() {
+        *cursor = CursorIcon::System(bevy::window::SystemCursorIcon::Default);
         return;
     }
 
-    let mut cursor = cursor.single_mut();
     let occupied = board.piece_on(pointed_square.unwrap());
 
     if occupied.is_some() {
