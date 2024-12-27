@@ -9,7 +9,15 @@ use shake_chess::GameState;
 
 fn main() -> Result<()> {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#game".into()),
+                resolution: bevy::window::WindowResolution::new(602., 602.),
+                resizable: false,
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(bevy_svg::prelude::SvgPlugin)
         .add_plugins(bevy_egui::EguiPlugin)
         .insert_resource(ClearColor(
