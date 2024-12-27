@@ -45,7 +45,7 @@ fn wasm_opt() -> anyhow::Result<()> {
             "./target/wasm32-unknown-unknown/release-wasm/opt",
             "--target",
             "web",
-            "./target/wasm32-unknown-unknown/release-wasm/shake_chess.wasm",
+            "./target/wasm32-unknown-unknown/release-wasm/shake-chess.wasm",
         ])
         .spawn()?
         .wait()?;
@@ -55,8 +55,8 @@ fn wasm_opt() -> anyhow::Result<()> {
         .args([
             "-Oz",
             "-o",
-            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm",
-            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm",
+            "./target/wasm32-unknown-unknown/release-wasm/opt/shake-chess_bg.wasm",
+            "./target/wasm32-unknown-unknown/release-wasm/opt/shake-chess_bg.wasm",
         ])
         .spawn()?
         .wait()?;
@@ -88,10 +88,10 @@ fn wasm_deploy() -> anyhow::Result<()> {
             "target/wasm32-unknown-unknown/release-wasm/opt",
             "-czvf",
             format!("{}.tar.gz", &tag).as_str(),
-            "shake_chess.d.ts",
-            "shake_chess.js",
-            "shake_chess_bg.wasm.d.ts",
-            "shake_chess_bg.wasm",
+            "shake-chess.d.ts",
+            "shake-chess.js",
+            "shake-chess_bg.wasm.d.ts",
+            "shake-chess_bg.wasm",
         ])
         .spawn()?
         .wait()?;
@@ -129,7 +129,7 @@ fn wasm_deploy() -> anyhow::Result<()> {
     Command::new("cp").args([
         "assets/*",
         home_dir
-            .join("Dropbox/website/website-assets/shake_chess")
+            .join("Dropbox/website/website-assets/shake-chess")
             .to_str()
             .context("couldn't convert dropbox wasm path to string")?,
     ]);
