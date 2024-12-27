@@ -55,8 +55,8 @@ fn wasm_opt() -> anyhow::Result<()> {
         .args([
             "-Oz",
             "-o",
-            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm", 
-            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm"
+            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm",
+            "./target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm",
         ])
         .spawn()?
         .wait()?;
@@ -67,7 +67,9 @@ fn wasm_opt() -> anyhow::Result<()> {
 }
 
 fn wasm_deploy() -> anyhow::Result<()> {
-    let status = Command::new("git").args(["status", "--porcelain"]).output()?;
+    let status = Command::new("git")
+        .args(["status", "--porcelain"])
+        .output()?;
     if !status.stdout.is_empty() {
         eprintln!("xtask/wasm-deploy => Working tree is not empty!");
         std::process::exit(1);
@@ -84,7 +86,7 @@ fn wasm_deploy() -> anyhow::Result<()> {
         .args([
             "-C",
             "target/wasm32-unknown-unknown/release-wasm/opt",
-            "-czvf", 
+            "-czvf",
             format!("{}.tar.gz", &tag).as_str(),
             "shake_chess.d.ts",
             "shake_chess.js",
@@ -98,7 +100,10 @@ fn wasm_deploy() -> anyhow::Result<()> {
     Command::new("git").args(["tag", &tag]).spawn()?.wait()?;
 
     println!("xtask/wasm-deploy => Push tag to github...");
-    Command::new("git").args(["push", "--tags"]).spawn()?.wait()?;
+    Command::new("git")
+        .args(["push", "--tags"])
+        .spawn()?
+        .wait()?;
 
     println!("xtask/wasm-deploy => Creating Github release...");
     Command::new("gh")
@@ -121,7 +126,7 @@ fn wasm_deploy() -> anyhow::Result<()> {
 
     println!("xtask/wasm-deploy => Copying assets to Dropbox...");
     let home_dir = dirs::home_dir().context("couldn't get path to home dir")?;
-    Command::new("cp").args([ "-R",
+    Command::new("cp").args([
         "assets/*",
         home_dir
             .join("Dropbox/website/website-assets/shake_chess")
@@ -132,3 +137,4 @@ fn wasm_deploy() -> anyhow::Result<()> {
     println!("xtask/wasm-deploy => Done!");
     Ok(())
 }
+
