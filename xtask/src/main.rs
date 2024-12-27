@@ -119,12 +119,12 @@ fn wasm_deploy() -> anyhow::Result<()> {
         .spawn()?
         .wait()?;
 
-    println!("xtask/wasm-deploy => Copying wasm to Dropbox...");
+    println!("xtask/wasm-deploy => Copying assets to Dropbox...");
     let home_dir = dirs::home_dir().context("couldn't get path to home dir")?;
-    Command::new("cp").args([
-        "target/wasm32-unknown-unknown/release-wasm/opt/shake_chess_bg.wasm",
+    Command::new("cp").args([ "-R",
+        "assets/*",
         home_dir
-            .join("Dropbox/website/website-wasm/shake_chess_bg.wasm")
+            .join("Dropbox/website/website-assets/shake_chess")
             .to_str()
             .context("couldn't convert dropbox wasm path to string")?,
     ]);
