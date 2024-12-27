@@ -1,3 +1,4 @@
+workspace = { members = ['xtask'] }
 [package]
 name = "shake_chess"
 version = "0.1.0"
@@ -5,14 +6,29 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
 anyhow = "1.0.75"
-bevy = "0.15.0"
-bevy_egui = "0.31.1"
+bevy = { version = "0.15.0", features = ["bevy_render","bevy_asset","bevy_sprite","bevy_text","bevy_winit","webgl2", "bevy_state", "bevy_window"], default-features = false}
+bevy_egui = { version = "0.31.1", features = ["render", "default_fonts"], default-features = false }
 bevy_svg = { git = "https://github.com/shakesbeare/bevy_svg" } # waiting for https://github.com/Weasy666/bevy_svg/pull/44
 chess = "3.2.0"
 miniserde = "0.1.41"
 rand = "0.8.5"
 tokio = { version = "1.36.0", features = ["rt"], default-features = false }
 futures = { version = "0.3.30", features = ["std", "async-await"], default-features = false }
-reqwest = { version = "0.11.24", features = ["json", "blocking", "default-tls"], default-features = false }
+reqwest = { version = "0.11.24", features = ["json", "blocking", "default-tls"], default-features = false } 
+wasm-bindgen-futures = { version = "0.4.41", default-features = false }
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package.'*']
+opt-level = 3
+
+[profile.release-wasm]
+inherits = "release"
+lto = true
+opt-level = 'z'
+codegen-units = 1
+
