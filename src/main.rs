@@ -4,7 +4,7 @@ use bevy::{
     window::{WindowEvent, WindowResized},
     winit::cursor::CursorIcon,
 };
-use bevy_egui::{egui::self, EguiContexts};
+use bevy_egui::{egui, EguiContexts};
 use shake_chess::GameState;
 
 fn main() -> Result<()> {
@@ -41,9 +41,10 @@ fn main() -> Result<()> {
                 (
                     shake_chess::game::mouse_point,
                     shake_chess::game::act,
+                    shake_chess::ui::turn_readout,
                     shake_chess::render::cursor_swap,
                     shake_chess::render::render_selector,
-                    shake_chess::ai::single_ai_move.run_if(
+                    shake_chess::ai::stockfish_move.run_if(
                         in_state(shake_chess::GameState::Playing)
                             .and(in_state(shake_chess::GameMode::VsAi)),
                     ),

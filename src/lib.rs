@@ -6,6 +6,7 @@ pub mod render;
 pub mod ui;
 
 use bevy::prelude::{Component, Event, Resource, States};
+use futures::Future;
 
 #[derive(Event, Debug)]
 pub struct TurnEndEvent;
@@ -92,4 +93,41 @@ pub enum GameMode {
     Hotseat,
     VsAi,
     Sim,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run_async<F>(future: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    std::thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("Cannot start tokio runtime");
+
+        rt.block_on(async move {
+            let local = tokio::task::LocalSet::new();
+            local
+                .run_until(async move {
+                    tokio::task::spawn_local(future).await.unwrap();
+                })
+                .await;
+        });
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn run_async<F>(future: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    wasm_bindgen_futures::spawn_local(async move {
+        let local = tokio::task::LocalSet::new();
+        local
+            .run_until(async move {
+                tokio::task::spawn_local(future).await.unwrap();
+            })
+            .await;
+    });
 }

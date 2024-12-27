@@ -1,5 +1,5 @@
 use crate::{
-    render::BACKGROUND_COLOR, GameMode, GameResult, GameRule, GameState, SwitchSides, TurnEndEvent,
+    render::BACKGROUND_COLOR, GameMode, GameResult, GameRule, GameState, SideToMove, SwitchSides, TurnEndEvent
 };
 use bevy::prelude::*;
 use bevy_egui::{
@@ -81,10 +81,6 @@ pub fn end_screen(
         .exact_width(316.)
         .show(ctx, |ui| {
             ui.vertical_centered(|ui| {
-                ui.ctx().set_visuals(egui::Visuals {
-                    panel_fill: Color32::from_hex(BACKGROUND_COLOR).unwrap(),
-                    ..default()
-                });
                 ui.add_space(301.0 - 100.0);
                 ui.heading(RichText::new(header).font(FontId::proportional(40.0)));
 
@@ -110,6 +106,23 @@ pub fn end_screen(
                         commands.entity(e).despawn_recursive();
                     }
                 }
+            });
+        });
+}
+
+pub fn turn_readout(
+    mut contexts: EguiContexts,
+    side_to_move: Res<SideToMove>,
+) {
+    let ctx = contexts.ctx_mut();
+    egui::SidePanel::right("")
+        .show_separator_line(false)
+        .resizable(false)
+        .exact_width(316.)
+        .show(ctx, |ui| {
+            ui.vertical_centered(|ui| {
+                let side = format!("{:?}'s Turn!", side_to_move.0);
+                ui.heading(RichText::new(side).font(FontId::proportional(40.0)));
             });
         });
 }

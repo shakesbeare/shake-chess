@@ -11,4 +11,8 @@ bevy = "0.15.0"
 bevy_egui = "0.31.1"
 bevy_svg = { git = "https://github.com/shakesbeare/bevy_svg" } # waiting for https://github.com/Weasy666/bevy_svg/pull/44
 chess = "3.2.0"
+miniserde = "0.1.41"
 rand = "0.8.5"
+tokio = { version = "1.36.0", features = ["rt"], default-features = false }
+futures = { version = "0.3.30", features = ["std", "async-await"], default-features = false }
+reqwest = { version = "0.11.24", features = ["json", "blocking", "default-tls"], default-features = false }
