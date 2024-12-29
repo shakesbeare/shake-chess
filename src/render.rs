@@ -15,7 +15,6 @@ const DARK_SQUARE_COLOR: &str = "#B58863"; // ... again
 const SELECT_COLOR: &str = "#ADD8E6";
 pub const BACKGROUND_COLOR: &str = "#313338"; // stolen from discord
 
-#[allow(dead_code)]
 #[derive(Resource, Default, Debug)]
 pub struct DrawInfo {
     square_size: f32,

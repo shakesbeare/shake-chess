@@ -1,6 +1,6 @@
 use std::{
     str::FromStr,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{Mutex, MutexGuard},
 };
 
 use crate::{GameRule, Last50, SideToMove, TurnEndEvent};

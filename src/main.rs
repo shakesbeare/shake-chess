@@ -1,7 +1,7 @@
 use anyhow::Result;
 use bevy::{
     prelude::*,
-    window::{WindowEvent, WindowResized},
+    window::WindowResized,
     winit::cursor::CursorIcon,
 };
 use bevy_egui::{egui, EguiContexts};
@@ -37,7 +37,7 @@ fn main() -> Result<()> {
         .add_event::<shake_chess::TurnEndEvent>()
         .add_systems(PreStartup, shake_chess::render::update_draw_info)
         .add_systems(Startup, (setup, setup_ui, shake_chess::game::setup_game))
-        .add_systems(PreUpdate, (shake_chess::render::update_draw_info))
+        .add_systems(PreUpdate, shake_chess::render::update_draw_info)
         .add_systems(
             Update,
             (

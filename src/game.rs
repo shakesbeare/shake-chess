@@ -119,7 +119,7 @@ pub fn act(
 fn make_move(
     source: Square,
     dest: Square,
-    promotion: Option<Piece>,
+    _promotion: Option<Piece>,
     board: &mut Board,
     selected_piece: &mut SelectedPiece,
     side_to_move: &mut SideToMove,

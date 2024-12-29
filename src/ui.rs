@@ -1,9 +1,9 @@
 use crate::{
-    render::BACKGROUND_COLOR, GameMode, GameResult, GameRule, GameState, SideToMove, SwitchSides, TurnEndEvent
+    GameMode, GameResult, GameRule, GameState, SideToMove, SwitchSides, TurnEndEvent
 };
 use bevy::prelude::*;
 use bevy_egui::{
-    egui::{self, Color32, FontId, RichText},
+    egui::{self, FontId, RichText},
     EguiContexts,
 };
 
@@ -13,7 +13,7 @@ pub fn main_menu(
     mut game_mode: ResMut<NextState<GameMode>>,
     mut switch_sides: ResMut<SwitchSides>,
     mut up_ev: EventWriter<TurnEndEvent>,
-    mut game_rule: ResMut<GameRule>,
+    _game_rule: ResMut<GameRule>,
 ) {
     let ctx = contexts.ctx_mut();
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -60,7 +60,7 @@ pub fn end_screen(
     mut board: ResMut<crate::game::Board>,
     mut last_50: ResMut<crate::Last50>,
     result: Res<GameResult>,
-    mut drawn: Query<
+    drawn: Query<
         Entity,
         Or<(
             With<crate::Piece>,
